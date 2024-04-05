@@ -1,0 +1,39 @@
+version: '2'
+services:
+   elasticsearch:
+      image: elasticsearch:7.17.0
+      container_name: elasticsearch
+      environment:
+         - discovery.type=single-node
+         - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      volumes:
+         - esdata1:/usr/share/elasticsearch/data
+      ports:
+         - "9300:9300"
+         - "9200:9200"
+      networks:
+         - spring-cloud-network
+      healthcheck:
+         test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
+         interval: 10s
+         timeout: 10s
+         retries: 5
+   demo-server:
+      container_name: demo-es-dockerized
+      build:
+         context: .
+         dockerfile: Dockerfile
+      image: demo-es-dockerized:latest
+      ports:
+         - "8080:8080"
+      networks:
+         - spring-cloud-network
+      depends_on:
+         elasticsearch:
+            condition: service_healthy
+networks:
+   spring-cloud-network:
+      driver: bridge
+volumes:
+   esdata1:
+      driver: local

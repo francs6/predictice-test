@@ -27,5 +27,5 @@ public interface AlbumRepositoryCustom {
      *
      * @return album year facets
      */
-    Map<Long, Long> getAlbumYearFacets();
+    Map<String, Long> getAlbumYearFacets();
 }

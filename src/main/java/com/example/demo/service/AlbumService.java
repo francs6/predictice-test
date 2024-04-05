@@ -59,7 +59,7 @@ public class AlbumService {
         return albumRepository.searchAlbums(year, searchTxt, pageable);
     }
 
-    public Map<Long, Long> getAlbumYearFacets() {
+    public Map<String, Long> getAlbumYearFacets() {
         return albumRepository.getAlbumYearFacets();
     }
 

@@ -3,6 +3,7 @@ package com.example.demo.repository.impl;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.Buckets;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import com.example.demo.model.Album;
 import com.example.demo.repository.AlbumRepositoryCustom;
@@ -41,7 +42,7 @@ public class AlbumRepositoryCustomImpl implements AlbumRepositoryCustom {
     }
 
     @Override
-    public Map<Long, Long> getAlbumYearFacets() {
+    public Map<String, Long> getAlbumYearFacets() {
         Query query = NativeQuery.builder().withMaxResults(0).withAggregation("years", Aggregation.of(a -> a.terms(ta -> ta.field("year").size(1000)))).withQuery(q -> q.matchAll(ma -> ma)).build();
 
         SearchHits<Album> searchHits = esOperations.search(query, Album.class);
@@ -49,10 +50,14 @@ public class AlbumRepositoryCustomImpl implements AlbumRepositoryCustom {
         ElasticsearchAggregations aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
         if (aggregations == null || aggregations.aggregations().isEmpty()) return new HashMap<>();
 
-        Buckets<LongTermsBucket> buckets = aggregations.aggregations().get(0).aggregation().getAggregate().lterms().buckets();
-
-        Map<Long, Long> res = new HashMap<>();
-        buckets.array().forEach(bucket -> res.put(bucket.key(), bucket.docCount()));
+        Map<String, Long> res = new HashMap<>();
+        if(aggregations.aggregations().get(0).aggregation().getAggregate().isLterms()) {
+            Buckets<LongTermsBucket> buckets = aggregations.aggregations().get(0).aggregation().getAggregate().lterms().buckets();
+            buckets.array().forEach(bucket -> res.put(bucket.key()+"", bucket.docCount()));
+        } else if (aggregations.aggregations().get(0).aggregation().getAggregate().isSterms()) {
+            Buckets<StringTermsBucket> buckets = aggregations.aggregations().get(0).aggregation().getAggregate().sterms().buckets();
+            buckets.array().forEach(bucket -> res.put(bucket.key().toString(), bucket.docCount()));
+        }
 
         return res;
     }
